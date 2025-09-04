@@ -15,13 +15,13 @@
         <form @submit.prevent="handleSubmit" class="space-y-6">
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">薬物</label>
+              <label class="block text-sm font-medium text-gray-700 mb-2">処方薬</label>
               <select
                 v-model="form.medicationId"
                 required
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               >
-                <option value="">薬物を選択</option>
+                <option value="">処方薬を選択</option>
                 <option v-for="medication in medications" :key="medication.id" :value="medication.id">
                   {{ medication.name }}
                 </option>

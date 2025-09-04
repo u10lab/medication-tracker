@@ -4,7 +4,7 @@
       <div class="flex justify-between h-16">
         <div class="flex items-center">
           <div class="flex-shrink-0">
-            <h1 class="text-xl font-bold text-primary-600">💊 薬物管理</h1>
+            <h1 class="text-xl font-bold text-primary-600">💊 処方薬管理</h1>
           </div>
         </div>
         
@@ -30,7 +30,7 @@
 <script setup>
 const navigation = [
   { name: 'Dashboard', href: '/', label: 'ダッシュボード', icon: '📊' },
-  { name: 'Medications', href: '/medications', label: '薬物管理', icon: '💊' },
+  { name: 'Medications', href: '/medications', label: '処方薬管理', icon: '💊' },
   { name: 'Calendar', href: '/calendar', label: 'カレンダー', icon: '📅' },
   { name: 'SideEffects', href: '/side-effects', label: '副作用記録', icon: '⚠️' }
 ]

@@ -4,7 +4,7 @@
       <div class="p-6">
         <div class="flex justify-between items-center mb-6">
           <h2 class="text-xl font-bold text-gray-900">
-            {{ isEdit ? '薬物情報を編集' : '新しい薬物を追加' }}
+            {{ isEdit ? '処方薬情報を編集' : '新しい処方薬を追加' }}
           </h2>
           <button 
             @click="$emit('close')"
@@ -20,13 +20,13 @@
             <h3 class="text-lg font-medium text-gray-900">基本情報</h3>
             
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">薬物名</label>
+              <label class="block text-sm font-medium text-gray-700 mb-2">処方薬名</label>
               <input
                 v-model="form.name"
                 type="text"
                 required
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                placeholder="薬物名を入力"
+                placeholder="処方薬名を入力"
               >
             </div>
 
@@ -36,7 +36,7 @@
                 v-model="form.description"
                 rows="3"
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                placeholder="薬物の説明を入力"
+                placeholder="処方薬の説明を入力"
               ></textarea>
             </div>
 

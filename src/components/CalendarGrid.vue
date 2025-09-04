@@ -130,7 +130,7 @@ const calendarDates = computed(() => {
     const isToday = date.getTime() === today.getTime()
     const isPast = date < today
     
-    // その日の薬物スケジュールを取得
+    // その日の処方薬スケジュールを取得
     const dayMedications = getMedicationsForDate(dateString)
     
     // 服薬率を計算
