@@ -305,19 +305,19 @@ CREATE TABLE side_effect_types (
   - [x] Axios HTTP クライアント追加
   - [x] Supabase JavaScript SDK追加
   - [x] 認証状態管理ストア作成
-- [ ] **認証システム統合** 🔄 **進行中**
+- [x] **認証システム統合** ✅ **完了**
   - [x] フロントエンドにSupabase Auth統合
-  - [ ] Laravel Sanctum設定（APIトークン管理用）
-  - [ ] Supabase Auth + Laravel Sanctumハイブリッド認証実装
-  - [ ] 認証コンポーネント・画面作成（Login/Register/Dashboard）
+  - [x] Laravel Sanctum設定（APIトークン管理用）
+  - [x] Supabase Auth + Laravel Sanctumハイブリッド認証実装
+  - [x] 認証コンポーネント・画面作成（Login/Register/Dashboard）
 
 ### Phase 2: データベース・モデル構築
-- [ ] **Supabaseデータベース設計**
-  - [ ] medicationsテーブル作成（Supabase Dashboard）
-  - [ ] medication_patternsテーブル作成
-  - [ ] medication_logsテーブル作成
-  - [ ] side_effect_typesテーブル作成
-  - [ ] RLS（Row Level Security）ポリシー設定
+- [x] **Supabaseデータベース設計** ✅ **完了**
+  - [x] medicationsテーブル作成（Supabase Dashboard）
+  - [x] medication_patternsテーブル作成  
+  - [x] medication_logsテーブル作成
+  - [x] side_effect_typesテーブル作成
+  - [x] RLS（Row Level Security）ポリシー設定
 - [ ] **Laravel モデル・API構築**
   - [ ] Laravel Eloquentモデル作成（Supabase接続）
   - [ ] リレーション設定・ファクトリー・シーダー作成
