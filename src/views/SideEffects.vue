@@ -3,7 +3,7 @@
     <div class="flex justify-between items-center mb-8">
       <div>
         <h1 class="text-3xl font-bold text-gray-900">副作用記録</h1>
-        <p class="text-gray-600 mt-2">薬物による副作用を記録・管理できます</p>
+        <p class="text-gray-600 mt-2">処方薬による副作用を記録・管理できます</p>
       </div>
       <button
         @click="showForm = true"
@@ -51,12 +51,12 @@
     <div class="card mb-6">
       <div class="flex flex-wrap gap-4 items-center">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">薬物で絞り込み</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">処方薬で絞り込み</label>
           <select
             v-model="selectedMedication"
             class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           >
-            <option value="">すべての薬物</option>
+            <option value="">すべての処方薬</option>
             <option v-for="medication in medications" :key="medication.id" :value="medication.id">
               {{ medication.name }}
             </option>
@@ -203,7 +203,7 @@ const mostCommonSymptom = computed(() => {
 const filteredSideEffects = computed(() => {
   let filtered = [...sideEffects]
   
-  // 薬物で絞り込み
+  // 処方薬で絞り込み
   if (selectedMedication.value) {
     filtered = filtered.filter(effect => effect.medicationId === parseInt(selectedMedication.value))
   }
@@ -245,7 +245,7 @@ const formatDate = (dateString) => {
 
 const getMedicationName = (medicationId) => {
   const medication = medications.find(med => med.id === medicationId)
-  return medication ? medication.name : '不明な薬物'
+  return medication ? medication.name : '不明な処方薬'
 }
 
 const getSeverityLabel = (severity) => {

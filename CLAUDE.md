@@ -1,18 +1,14 @@
-- ## 推奨機能 (Phase 2)
+## Supabase設定情報（開発メモ）
 
-#### 7. 服薬統計・レポート機能
-- [ ] 服薬率計算・表示
-- [ ] 副作用発生パターン分析
-- [ ] 薬別副作用履歴
-- [ ] 月間・週間レポート生成
+### 接続情報
+- **Project URL**: https://gwlospsmdgdmlyjxudmq.supabase.co
+- **Anon Key**: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...（フルキー）
+- **Project ID**: gwlospsmdgdmlyjxudmq
 
-#### 8. 高度な管理機能
-- [ ] 薬剤画像管理
-- [ ] 薬剤情報の詳細検索
-- [ ] 服薬アラート・通知機能
+### 設定済みファイル
+- フロントエンド .env: `/home/umeshita/project/medication-tracker/.env`
+- バックエンド .env: 未設定（Laravel APIディレクトリが必要）
 
-#### 9. データエクスポート機能
-- [ ] 服薬記録のPDF出力
-- [ ] 副作用レポートの出力
-- [ ] 医師診察用データ出力
-- [ ] CSV/Excel形式でのデータエクスポート今回は上記の推奨機能は作成しない形で進めます。要件定義書を再作成してください。
+### 注意事項
+- Service Role Key（秘密鍵）は別途取得が必要
+- Database接続情報（Host/Password）も追加取得必要

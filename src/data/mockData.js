@@ -1,6 +1,6 @@
 import { reactive } from 'vue'
 
-// 薬物データ
+// 処方薬データ
 export const medications = reactive([
   {
     id: 1,

@@ -16,7 +16,7 @@
       />
       
       <StatCard
-        title="登録薬物数"
+        title="登録処方薬数"
         :value="medications.length"
         subtitle="アクティブ"
         icon="💊"
@@ -225,7 +225,7 @@ const formatDateTime = (date, time) => {
 
 const getMedicationName = (medicationId) => {
   const medication = medications.find(med => med.id === medicationId)
-  return medication ? medication.name : '不明な薬物'
+  return medication ? medication.name : '不明な処方薬'
 }
 
 const getSeverityLabel = (severity) => {
