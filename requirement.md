@@ -318,12 +318,14 @@ CREATE TABLE side_effect_types (
   - [x] medication_logsテーブル作成
   - [x] side_effect_typesテーブル作成
   - [x] RLS（Row Level Security）ポリシー設定
-- [ ] **Laravel モデル・API構築**
-  - [ ] Laravel Eloquentモデル作成（Supabase接続）
-  - [ ] リレーション設定・ファクトリー・シーダー作成
-  - [ ] 処方薬CRUD API実装（認証必須）
-  - [ ] バリデーション・API Resource設定
-  - [ ] エラーハンドリング統一
+- [x] **Laravel モデル・API構築** ✅ **完了**
+  - [x] Laravel Eloquentモデル作成（Supabase接続）
+  - [x] リレーション設定・ファクトリー・シーダー作成
+  - [x] 処方薬CRUD API実装（認証必須）
+  - [x] バリデーション・API Resource設定
+  - [x] エラーハンドリング統一
+  - [x] PHPUnitテスト作成（APIエンドポイント）
+  - [x] API動作確認・テスト完了
 
 ### Phase 3: 処方薬管理機能
 - [ ] **処方薬管理バックエンド**
