@@ -1,4 +1,4 @@
-<template>
+800<template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="flex justify-between items-center mb-8">
       <div>
@@ -14,8 +14,21 @@
       </button>
     </div>
 
+    <!-- ローディング表示 -->
+    <div v-if="loading" class="text-center py-12">
+      <div class="text-6xl mb-4">⏳</div>
+      <p class="text-gray-500">処方薬を読み込み中...</p>
+    </div>
+
+    <!-- エラー表示 -->
+    <div v-else-if="error" class="text-center py-12">
+      <div class="text-6xl mb-4">⚠️</div>
+      <p class="text-red-600 mb-4">{{ error }}</p>
+      <button @click="fetchMedications" class="btn-primary">再読み込み</button>
+    </div>
+
     <!-- 処方薬一覧 -->
-    <div v-if="medications.length === 0" class="text-center py-12">
+    <div v-else-if="medications.length === 0" class="text-center py-12">
       <div class="text-6xl mb-4">💊</div>
       <h3 class="text-lg font-medium text-gray-900 mb-2">処方薬が登録されていません</h3>
       <p class="text-gray-500 mb-6">最初の処方薬を追加して服薬管理を始めましょう</p>
@@ -73,15 +86,42 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import MedicationCard from '../components/MedicationCard.vue'
 import MedicationForm from '../components/MedicationForm.vue'
-import { medications } from '../data/mockData.js'
+import { apiService } from '../services/api.js'
+import { useAuthStore } from '../stores/auth.js'
 
+const authStore = useAuthStore()
+const medications = ref([])
+const loading = ref(true)
+const error = ref(null)
 const showForm = ref(false)
 const editingMedication = ref(null)
 const showDeleteDialog = ref(false)
 const deletingMedication = ref(null)
+
+// データ取得
+const fetchMedications = async () => {
+  try {
+    loading.value = true
+    error.value = null
+    const response = await apiService.medications.getAll()
+    medications.value = response.data || []
+  } catch (err) {
+    error.value = '処方薬の取得に失敗しました'
+    console.error('Error fetching medications:', err)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 初期化
+onMounted(async () => {
+  if (authStore.user) {
+    await fetchMedications()
+  }
+})
 
 const editMedication = (medication) => {
   editingMedication.value = medication
@@ -89,7 +129,7 @@ const editMedication = (medication) => {
 }
 
 const deleteMedication = (medicationId) => {
-  deletingMedication.value = medications.find(med => med.id === medicationId)
+  deletingMedication.value = medications.value.find(med => med.id === medicationId)
   showDeleteDialog.value = true
 }
 
@@ -98,30 +138,33 @@ const closeForm = () => {
   editingMedication.value = null
 }
 
-const saveMedication = (medicationData) => {
-  if (editingMedication.value) {
-    // 編集
-    const index = medications.findIndex(med => med.id === editingMedication.value.id)
-    if (index !== -1) {
-      medications[index] = { ...medicationData, id: editingMedication.value.id }
+const saveMedication = async (medicationData) => {
+  try {
+    if (editingMedication.value) {
+      // 編集
+      await apiService.medications.update(editingMedication.value.id, medicationData)
+    } else {
+      // 新規追加
+      await apiService.medications.create(medicationData)
     }
-  } else {
-    // 新規追加
-    const newMedication = {
-      ...medicationData,
-      id: Date.now()
-    }
-    medications.push(newMedication)
+    
+    // 処方薬リスト再取得
+    await fetchMedications()
+    closeForm()
+  } catch (err) {
+    error.value = '処方薬の保存に失敗しました'
+    console.error('Error saving medication:', err)
   }
-  
-  closeForm()
 }
 
-const confirmDelete = () => {
+const confirmDelete = async () => {
   if (deletingMedication.value) {
-    const index = medications.findIndex(med => med.id === deletingMedication.value.id)
-    if (index !== -1) {
-      medications.splice(index, 1)
+    try {
+      await apiService.medications.delete(deletingMedication.value.id)
+      await fetchMedications() // リスト再取得
+    } catch (err) {
+      error.value = '処方薬の削除に失敗しました'
+      console.error('Error deleting medication:', err)
     }
   }
   showDeleteDialog.value = false

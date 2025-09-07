@@ -85,7 +85,7 @@ export const apiService = {
     }
   },
 
-  // Medications endpoints (placeholder for future implementation)
+  // Medications endpoints
   medications: {
     getAll: async () => {
       try {
@@ -93,6 +93,115 @@ export const apiService = {
         return response.data
       } catch (error) {
         console.error('Error getting medications:', error)
+        throw error
+      }
+    },
+
+    getById: async (id) => {
+      try {
+        const response = await apiClient.get(`/medications/${id}`)
+        return response.data
+      } catch (error) {
+        console.error('Error getting medication:', error)
+        throw error
+      }
+    },
+
+    create: async (medicationData) => {
+      try {
+        const response = await apiClient.post('/medications', medicationData)
+        return response.data
+      } catch (error) {
+        console.error('Error creating medication:', error)
+        throw error
+      }
+    },
+
+    update: async (id, medicationData) => {
+      try {
+        const response = await apiClient.put(`/medications/${id}`, medicationData)
+        return response.data
+      } catch (error) {
+        console.error('Error updating medication:', error)
+        throw error
+      }
+    },
+
+    delete: async (id) => {
+      try {
+        const response = await apiClient.delete(`/medications/${id}`)
+        return response.data
+      } catch (error) {
+        console.error('Error deleting medication:', error)
+        throw error
+      }
+    }
+  },
+
+  // Medication Patterns endpoints
+  patterns: {
+    getByMedication: async (medicationId) => {
+      try {
+        const response = await apiClient.get(`/medications/${medicationId}/patterns`)
+        return response.data
+      } catch (error) {
+        console.error('Error getting patterns:', error)
+        throw error
+      }
+    },
+
+    create: async (medicationId, patternData) => {
+      try {
+        const response = await apiClient.post(`/medications/${medicationId}/patterns`, patternData)
+        return response.data
+      } catch (error) {
+        console.error('Error creating pattern:', error)
+        throw error
+      }
+    }
+  },
+
+  // Medication Logs endpoints
+  logs: {
+    getAll: async () => {
+      try {
+        const response = await apiClient.get('/medication-logs')
+        return response.data
+      } catch (error) {
+        console.error('Error getting medication logs:', error)
+        throw error
+      }
+    },
+
+    create: async (logData) => {
+      try {
+        const response = await apiClient.post('/medication-logs', logData)
+        return response.data
+      } catch (error) {
+        console.error('Error creating medication log:', error)
+        throw error
+      }
+    },
+
+    update: async (id, logData) => {
+      try {
+        const response = await apiClient.put(`/medication-logs/${id}`, logData)
+        return response.data
+      } catch (error) {
+        console.error('Error updating medication log:', error)
+        throw error
+      }
+    }
+  },
+
+  // Side Effects endpoints  
+  sideEffects: {
+    getTypes: async () => {
+      try {
+        const response = await apiClient.get('/side-effect-types')
+        return response.data
+      } catch (error) {
+        console.error('Error getting side effect types:', error)
         throw error
       }
     }

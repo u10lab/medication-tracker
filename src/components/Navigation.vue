@@ -53,6 +53,7 @@
 </template>
 
 <script setup>
+import { nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
@@ -69,9 +70,13 @@ const navigation = [
 const handleLogout = async () => {
   try {
     await authStore.signOut()
+    // Use nextTick to ensure DOM updates are complete before navigation
+    await nextTick()
     router.push('/login')
   } catch (error) {
     console.error('Logout error:', error)
+    // Force navigation even if logout fails
+    router.push('/login')
   }
 }
 </script>
