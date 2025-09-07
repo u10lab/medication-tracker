@@ -288,122 +288,63 @@ CREATE TABLE side_effect_types (
 
 **注意**: 本プロジェクトは**Bolt.newで作成されたVue.js 3フロントエンド**が既に存在することを前提とした手順です。
 
-### Phase 1: 環境構築・認証基盤
+### Phase 1: 環境構築・認証基盤 ✅ **完了**
 
-**開発環境の分離:**
-- **フロントエンド**: `/home/umeshita/project/medication-tracker` (Vue.js 3)
-- **バックエンドAPI**: `/home/umeshita/project/medication-tracker-api` (Laravel 11)
-
-- [x] **バックエンド環境構築** ✅ **完了**
+- [x] **バックエンド環境構築**
   - [x] Laravel 11 APIプロジェクト作成（`medication-tracker-api/`）
   - [x] Supabaseプロジェクト作成・設定（Auth + PostgreSQL DB）
   - [x] Laravel環境変数設定(.env) - Supabase接続情報
-  - [ ] Railway初期デプロイ設定（Laravel API用）
-- [x] **フロントエンド拡張**（既存Vue.jsプロジェクトに追加） ✅ **完了**
+- [x] **フロントエンド拡張**
   - [x] Vue.js 3 + Vite + TailwindCSS（既存）
   - [x] Pinia状態管理ライブラリ追加
   - [x] Axios HTTP クライアント追加
   - [x] Supabase JavaScript SDK追加
   - [x] 認証状態管理ストア作成
-- [ ] **認証システム統合** 🔄 **進行中**
+- [x] **認証システム統合**
   - [x] フロントエンドにSupabase Auth統合
-  - [ ] Laravel Sanctum設定（APIトークン管理用）
-  - [ ] Supabase Auth + Laravel Sanctumハイブリッド認証実装
-  - [ ] 認証コンポーネント・画面作成（Login/Register/Dashboard）
+  - [x] Laravel Sanctum設定（APIトークン管理用）
+  - [x] Supabase Auth + Laravel Sanctumハイブリッド認証実装
 
-### Phase 2: データベース・モデル構築
-- [ ] **Supabaseデータベース設計**
-  - [ ] medicationsテーブル作成（Supabase Dashboard）
-  - [ ] medication_patternsテーブル作成
-  - [ ] medication_logsテーブル作成
-  - [ ] side_effect_typesテーブル作成
-  - [ ] RLS（Row Level Security）ポリシー設定
-- [ ] **Laravel モデル・API構築**
-  - [ ] Laravel Eloquentモデル作成（Supabase接続）
-  - [ ] リレーション設定・ファクトリー・シーダー作成
-  - [ ] 処方薬CRUD API実装（認証必須）
-  - [ ] バリデーション・API Resource設定
-  - [ ] エラーハンドリング統一
+### Phase 2: Laravel APIモックデータ実装 ✅ **完了**
 
-### Phase 3: 処方薬管理機能
-- [ ] **処方薬管理バックエンド**
-  - [ ] 処方薬管理Controller・Repository実装
-  - [ ] 処方薬検索・フィルタリング機能
-  - [ ] APIテスト作成
-- [ ] **処方薬管理フロントエンド**（既存Vue.jsプロジェクトに追加）
-  - [ ] 処方薬一覧・詳細コンポーネント作成
-  - [ ] 処方薬登録・編集フォームコンポーネント作成
-  - [ ] 検索・フィルタリングUIコンポーネント作成
-  - [ ] ルーティング追加（Vue Router）
-  - [ ] バリデーション・エラーハンドリング
-  - [ ] APIとの連携実装
+- [x] **Laravel API構築（モックデータ）**
+  - [x] 処方薬CRUD APIモックデータ実装
+  - [x] 服薬記録・パターン管理APIモックデータ実装
+  - [x] 副作用記録APIモックデータ実装
+  - [x] 認証・バリデーション・エラーハンドリング統一
 
-### Phase 4: 服薬スケジュール機能
-- [ ] **スケジュール管理バックエンド**
-  - [ ] 服薬パターン生成ロジック（日常/サイクル/頓服）
-  - [ ] スケジュール計算・生成API
-  - [ ] パターン管理CRUD API
-- [ ] **スケジュール管理フロントエンド**
-  - [ ] スケジュール設定コンポーネント作成
-  - [ ] 複雑なパターン設定UI（サイクル服薬対応）
-  - [ ] 時刻選択・日程設定コンポーネント作成
-  - [ ] スケジュール一覧・編集機能
-  - [ ] ルーティング・ナビゲーション追加
+### Phase 3: フロントエンドAPI統合・MVP完成 ✅ **完了**
 
-### Phase 5: 服薬記録・副作用機能
-- [ ] **記録管理バックエンド**
-  - [ ] 服薬記録CRUD API
-  - [ ] 副作用記録API
-  - [ ] ステータス管理（taken/missed/skipped）
-  - [ ] 重篤度レベル管理
-- [ ] **記録管理フロントエンド**
-  - [ ] 日々の服薬記録コンポーネント作成
-  - [ ] 副作用症状チェックリストコンポーネント
-  - [ ] カスタム症状入力・メモ機能コンポーネント
-  - [ ] クイック記録UI（ワンタップ記録）
-  - [ ] 記録履歴表示・編集機能
+- [x] **APIサービス統合**
+  - [x] services/api.jsに全CRUD操作実装（medications, logs, patterns, side-effects）
+  - [x] 認証状態管理とAPI統合
+  - [x] エラーハンドリング統一
+- [x] **コンポーネントAPI連携**
+  - [x] Medications.vue: mockData → API呼び出し完了
+  - [x] データ構造統一・Vue.jsエラー修正
+  - [x] 画像読み込みエラー修正
 
-### Phase 6: カレンダー・ダッシュボード
-- [ ] **カレンダー機能**
-  - [ ] 月間カレンダーAPI（服薬予定・実績取得）
-  - [ ] 日別詳細情報API
-  - [ ] カレンダー表示コンポーネント作成
-  - [ ] 日別詳細モーダル・サイドパネルコンポーネント
-- [ ] **ダッシュボード**
-  - [ ] 今日の服薬予定API
-  - [ ] 統計データAPI（服薬率・副作用頻度）
-  - [ ] ダッシュボードコンポーネント作成
-  - [ ] 服薬状況サマリー表示コンポーネント
-  - [ ] ホーム画面統合・ナビゲーション完成
+### Phase 4: カレンダー統合・完全MVP完成 🔄 **進行中**
 
-### Phase 7: UI/UX最適化・本番対応
-- [ ] **デザイン・レスポンシブ対応**
-  - [ ] 全コンポーネントモバイル対応
-  - [ ] アクセシビリティ改善（WCAG 2.1 AA準拠）
-  - [ ] ローディング・エラー状態UI統一
-  - [ ] ユーザビリティテスト・改善
-- [ ] **本番環境構築**
-  - [ ] Railway Laravel APIデプロイ・最適化
-  - [ ] Vercel Vue.jsフロントエンド自動デプロイ設定
-  - [ ] Supabase本番環境設定・セキュリティ強化
-  - [ ] 環境変数・CORS・セキュリティ設定
-- [ ] **テスト・品質保証**
-  - [ ] Laravel PHPUnit APIテスト
-  - [ ] Vue.js Vitest コンポーネントテスト
-  - [ ] 統合テスト・E2Eテスト（Playwright/Cypress）
-  - [ ] 本番環境パフォーマンステスト
+- [ ] **残りコンポーネントAPI統合**
+  - [ ] CalendarGrid.vue: ローカルmockData → Laravel API連携
+  - [ ] Dashboard.vue: 完全なAPI統合
+  - [ ] SideEffects.vue: API統合完了
+- [ ] **機能統合テスト**
+  - [ ] 全機能の動作確認・バグ修正
+  - [ ] ユーザビリティ改善
 
-### Phase 8: 最終調整・リリース準備
-- [ ] **最終調整・バグ修正**
-  - [ ] エンドユーザビリティテスト
-  - [ ] クロスブラウザ対応確認
-  - [ ] パフォーマンス最適化・バグ修正
-  - [ ] データ整合性・セキュリティ最終チェック
-- [ ] **ドキュメント・リリース準備**
-  - [ ] API ドキュメント作成（OpenAPI/Swagger）
-  - [ ] 開発者向けREADME更新
-  - [ ] デプロイ手順書・環境構築ガイド作成
-  - [ ] 本番環境リリース・監視設定
+### Phase 5: 本番環境準備・デプロイ
+
+**技術スタック選定:**
+- **選択肢検討中**: Laravel API vs Supabase REST API
+- **フロントエンド**: Vercel
+- **データベース**: 選択肢に応じてPostgreSQL設定
+
+**デプロイ準備:**
+- [ ] 本番技術スタック決定
+- [ ] 環境変数設定・CORS設定
+- [ ] 本番環境テスト・デプロイ
 
 ---
 
@@ -490,4 +431,3 @@ CREATE TABLE side_effect_types (
 
 ---
 
-*この要件定義書は開発進捗に応じて更新されます。*

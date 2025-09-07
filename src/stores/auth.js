@@ -124,17 +124,29 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       loading.value = true
       
-      // Clear API access first
-      await clearApiAccess()
-      
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
-      
+      // Clear states first to prevent null reference errors
       user.value = null
       session.value = null
+      
+      // Clear API access
+      await clearApiAccess()
+      
+      // Supabase signout (with error handling)
+      try {
+        const { error } = await supabase.auth.signOut()
+        if (error) {
+          console.warn('Supabase signout warning:', error)
+        }
+      } catch (supabaseError) {
+        console.warn('Supabase signout failed, continuing with local cleanup:', supabaseError)
+      }
+      
       return { error: null }
     } catch (error) {
       console.error('Error signing out:', error)
+      // Even if there's an error, clear local state
+      user.value = null
+      session.value = null
       return { error }
     } finally {
       loading.value = false
