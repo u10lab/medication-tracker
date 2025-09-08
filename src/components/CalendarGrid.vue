@@ -18,7 +18,21 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-7 gap-1">
+    <!-- エラー表示 -->
+    <div v-if="error" class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+      <div class="flex items-center">
+        <div class="text-red-600 mr-2">⚠️</div>
+        <div class="text-red-800">{{ error }}</div>
+        <button @click="error = ''" class="ml-auto text-red-600 hover:text-red-800">×</button>
+      </div>
+    </div>
+
+    <!-- ローディング状態 -->
+    <div v-if="loading" class="flex justify-center items-center h-64">
+      <div class="text-gray-500">カレンダーデータを読み込み中...</div>
+    </div>
+
+    <div v-else class="grid grid-cols-7 gap-1">
       <div
         v-for="date in calendarDates"
         :key="date.key"
@@ -94,10 +108,14 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { medications, medicationLogs } from '../data/mockData.js'
+import { apiService } from '../services/api.js'
 
 const currentDate = ref(new Date())
 const selectedDate = ref(null)
+const medications = ref([])
+const medicationLogs = ref([])
+const loading = ref(false)
+const error = ref('')
 
 const weekDays = ['日', '月', '火', '水', '木', '金', '土']
 
@@ -160,73 +178,56 @@ const calendarDates = computed(() => {
 const getMedicationsForDate = (dateString) => {
   const dayMedications = []
   
-  medications.forEach(medication => {
-    const schedule = medication.schedule
-    const date = new Date(dateString)
-    
-    // 開始日と終了日をチェック
-    if (date < new Date(schedule.startDate) || date > new Date(schedule.endDate)) {
-      return
-    }
-    
-    // スケジュールタイプに応じて処理
-    if (schedule.type === 'daily') {
-      // 毎日のスケジュール
-      schedule.times.forEach(time => {
-        const log = medicationLogs.find(log => 
-          log.medicationId === medication.id && 
-          log.date === dateString && 
-          log.time === time
-        )
-        
-        dayMedications.push({
-          id: `${medication.id}-${time}`,
-          medicationId: medication.id,
-          name: medication.name,
-          time: time,
-          taken: log ? log.taken : false
-        })
-      })
-    } else if (schedule.type === 'cyclical') {
-      // サイクルスケジュール
-      const startDate = new Date(schedule.startDate)
-      const daysSinceStart = Math.floor((date - startDate) / (1000 * 60 * 60 * 24))
+  medications.value.forEach(medication => {
+    // 処方薬のスケジュール情報を直接使用
+    if (medication.schedule && medication.schedule.times && medication.schedule.times.length > 0) {
+      const date = new Date(dateString)
       
-      // サイクルパターンが正しく設定されているかチェック
-      if (!schedule.cyclePattern || !schedule.cyclePattern.activeDays || !schedule.cyclePattern.breakDays) {
-        return
+      // 開始日と終了日をチェック（日付のみで比較）
+      if (medication.schedule.startDate) {
+        const startDate = new Date(medication.schedule.startDate + 'T00:00:00')
+        const currentDate = new Date(dateString + 'T00:00:00')
+        if (currentDate < startDate) {
+          return
+        }
       }
       
-      const cycleLength = schedule.cyclePattern.activeDays + schedule.cyclePattern.breakDays
-      const currentCycle = Math.floor(daysSinceStart / cycleLength)
-      
-      // 総サイクル数を超えていないかチェック
-      if (currentCycle >= schedule.cyclePattern.totalCycles) {
-        return
+      if (medication.schedule.endDate) {
+        const endDate = new Date(medication.schedule.endDate + 'T23:59:59')
+        const currentDate = new Date(dateString + 'T00:00:00')
+        if (currentDate > endDate) {
+          return
+        }
       }
       
-      const dayInCycle = daysSinceStart % cycleLength
-      
-      // アクティブ期間内かチェック
-      if (dayInCycle < schedule.cyclePattern.activeDays) {
-        schedule.times.forEach(time => {
-          const log = medicationLogs.find(log => 
-            log.medicationId === medication.id && 
-            log.date === dateString && 
-            log.time === time
-          )
+      // スケジュールタイプに応じて処理
+      const scheduleType = medication.schedule.type || 'daily'
+      if (scheduleType === 'daily' || scheduleType === 'cyclical') {
+        medication.schedule.times.forEach(time => {
+          // ログデータから該当する記録を探す
+          const log = medicationLogs.value.find(log => {
+            // scheduled_dateの形式を確認（ISO形式またはYYYY-MM-DD形式）
+            const logDate = log.scheduled_date.includes('T') 
+              ? log.scheduled_date.split('T')[0] 
+              : log.scheduled_date
+            
+            // scheduled_timeの形式を確認（ISO形式またはHH:MM:SS形式）
+            const logTime = log.scheduled_time.includes('T')
+              ? log.scheduled_time.split('T')[1].substring(0, 8)
+              : log.scheduled_time
+            
+            return log.medication_id === medication.id && 
+                   logDate === dateString && 
+                   logTime === time + ':00'
+          })
+          
           
           dayMedications.push({
             id: `${medication.id}-${time}`,
             medicationId: medication.id,
             name: medication.name,
             time: time,
-            taken: log ? log.taken : false,
-            cycleInfo: {
-              currentCycle: currentCycle + 1,
-              dayInActivePeriod: dayInCycle + 1,
-              totalCycles: schedule.cyclePattern.totalCycles
-            }
+            taken: log ? (log.status === 'taken') : false
           })
         })
       }
@@ -257,36 +258,100 @@ const formatSelectedDate = (date) => {
   })
 }
 
-const toggleMedication = (med) => {
-  const existingLog = medicationLogs.find(log => 
-    log.medicationId === med.medicationId && 
-    log.date === selectedDate.value.dateString && 
-    log.time === med.time
-  )
-  
-  if (existingLog) {
-    existingLog.taken = !existingLog.taken
-    existingLog.timestamp = new Date().toISOString()
-  } else {
-    medicationLogs.push({
-      id: Date.now(),
-      medicationId: med.medicationId,
-      date: selectedDate.value.dateString,
-      time: med.time,
-      taken: true,
-      timestamp: new Date().toISOString()
+const toggleMedication = async (med) => {
+  try {
+    
+    const existingLog = medicationLogs.value.find(log => {
+      // scheduled_dateの形式を確認（ISO形式またはYYYY-MM-DD形式）
+      const logDate = log.scheduled_date.includes('T') 
+        ? log.scheduled_date.split('T')[0] 
+        : log.scheduled_date
+      
+      // scheduled_timeの形式を確認（ISO形式またはHH:MM:SS形式）
+      const logTime = log.scheduled_time.includes('T')
+        ? log.scheduled_time.split('T')[1].substring(0, 8)
+        : log.scheduled_time
+      
+      return log.medication_id === med.medicationId && 
+             logDate === selectedDate.value.dateString && 
+             logTime === med.time + ':00'
     })
+    
+    
+    if (existingLog) {
+      // 既存のログを更新
+      const newStatus = existingLog.status === 'taken' ? 'missed' : 'taken'
+      const updateData = {
+        status: newStatus,
+        actual_time: newStatus === 'taken' ? new Date().toISOString() : null
+      }
+      
+      console.log('Updating existing log:', updateData)
+      const response = await apiService.logs.update(existingLog.id, updateData)
+      console.log('Update response:', response)
+      
+      if (response.success) {
+        existingLog.status = newStatus
+        existingLog.actual_time = updateData.actual_time
+      }
+    } else {
+      // 新しいログを作成
+      const logData = {
+        medication_id: med.medicationId,
+        scheduled_date: selectedDate.value.dateString,
+        scheduled_time: med.time + ':00',
+        status: 'taken',
+        actual_time: new Date().toISOString()
+      }
+      
+      const response = await apiService.logs.create(logData)
+      
+      if (response.success && response.data) {
+        medicationLogs.value.push(response.data)
+      }
+    }
+    
+    // カレンダーの表示を強制的に再計算（データベース更新後）
+    const updatedMedications = getMedicationsForDate(selectedDate.value.dateString)
+    selectedDate.value.medications = updatedMedications
+    
+    // 服薬率を再計算
+    const takenCount = selectedDate.value.medications.filter(m => m.taken).length
+    selectedDate.value.adherenceRate = Math.round((takenCount / selectedDate.value.medications.length) * 100)
+    
+  } catch (error) {
+    console.error('Error updating medication log:', error)
+    error.value = '服薬状況の更新に失敗しました。もう一度お試しください。'
   }
-  
-  // 表示を更新
-  med.taken = !med.taken
-  
-  // 服薬率を再計算
-  const takenCount = selectedDate.value.medications.filter(m => m.taken).length
-  selectedDate.value.adherenceRate = Math.round((takenCount / selectedDate.value.medications.length) * 100)
 }
 
-onMounted(() => {
+const fetchData = async () => {
+  try {
+    loading.value = true
+    
+    // APIから処方薬データを取得
+    const medicationsResponse = await apiService.medications.getAll()
+    if (medicationsResponse.success && medicationsResponse.data) {
+      medications.value = medicationsResponse.data
+    }
+    
+    // APIから服薬ログデータを取得
+    const logsResponse = await apiService.logs.getAll()
+    if (logsResponse.success && logsResponse.data) {
+      medicationLogs.value = logsResponse.data
+    }
+    
+  } catch (error) {
+    console.error('Error fetching calendar data:', error)
+    error.value = 'カレンダーデータの取得に失敗しました。ページを再読み込みしてください。'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(async () => {
+  await fetchData()
+  
   // 今日の日付を選択
   const today = calendarDates.value.find(date => date.isToday)
   if (today) {

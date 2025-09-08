@@ -13,14 +13,36 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import Navigation from './components/Navigation.vue'
 import { useAuthStore } from './stores/auth'
 
 const authStore = useAuthStore()
+const router = useRouter()
+const route = useRoute()
 
 onMounted(async () => {
   // Initialize auth state
   await authStore.initialize()
 })
+
+// Watch for auth state changes and handle routing
+watch(
+  () => authStore.isAuthenticated,
+  (isAuthenticated) => {
+    if (!authStore.loading) {
+      const requiresAuth = route.meta.requiresAuth
+      const requiresGuest = route.meta.requiresGuest
+      
+      // Only redirect if we're not already on the correct page
+      if (requiresAuth && !isAuthenticated && route.name !== 'Login') {
+        router.push('/login')
+      } else if (requiresGuest && isAuthenticated && route.name !== 'Dashboard') {
+        router.push('/')
+      }
+    }
+  },
+  { immediate: true }
+)
 </script>

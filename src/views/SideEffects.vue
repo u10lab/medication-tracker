@@ -168,9 +168,20 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import SideEffectForm from '../components/SideEffectForm.vue'
-import { medications, sideEffects, severityOptions } from '../data/mockData.js'
+import { apiService } from '../services/api.js'
+
+const medications = ref([])
+const sideEffects = ref([])
+const medicationLogs = ref([])
+const loading = ref(false)
+
+const severityOptions = [
+  { value: 'mild', label: '軽度' },
+  { value: 'moderate', label: '中等度' },
+  { value: 'severe', label: '重度' }
+]
 
 const showForm = ref(false)
 const selectedMedication = ref('')
@@ -182,13 +193,13 @@ const thisMonthCount = computed(() => {
   thisMonth.setDate(1)
   const thisMonthString = thisMonth.toISOString().split('T')[0]
   
-  return sideEffects.filter(effect => effect.date >= thisMonthString).length
+  return sideEffects.value.filter(effect => effect.date >= thisMonthString).length
 })
 
 const mostCommonSymptom = computed(() => {
   const symptomCounts = {}
   
-  sideEffects.forEach(effect => {
+  sideEffects.value.forEach(effect => {
     effect.symptoms.forEach(symptom => {
       symptomCounts[symptom] = (symptomCounts[symptom] || 0) + 1
     })
@@ -201,7 +212,7 @@ const mostCommonSymptom = computed(() => {
 })
 
 const filteredSideEffects = computed(() => {
-  let filtered = [...sideEffects]
+  let filtered = [...sideEffects.value]
   
   // 処方薬で絞り込み
   if (selectedMedication.value) {
@@ -244,7 +255,7 @@ const formatDate = (dateString) => {
 }
 
 const getMedicationName = (medicationId) => {
-  const medication = medications.find(med => med.id === medicationId)
+  const medication = medications.value.find(med => med.id === medicationId)
   return medication ? medication.name : '不明な処方薬'
 }
 
@@ -266,15 +277,99 @@ const getSeverityClass = (severity) => {
   }
 }
 
-const saveSideEffect = (sideEffectData) => {
-  sideEffects.push(sideEffectData)
-  showForm.value = false
-}
-
-const deleteSideEffect = (effectId) => {
-  const index = sideEffects.findIndex(effect => effect.id === effectId)
-  if (index !== -1) {
-    sideEffects.splice(index, 1)
+const saveSideEffect = async (sideEffectData) => {
+  try {
+    // SideEffectFormで既に作成済みなので、ローカルデータに直接追加
+    if (sideEffectData.id) {
+      // 副作用データを即座に更新
+      sideEffects.value.unshift(sideEffectData) // 最新を先頭に追加
+      
+      // medicationLogsにも追加
+      const logData = {
+        id: sideEffectData.id,
+        medication_id: sideEffectData.medicationId,
+        scheduled_date: sideEffectData.date,
+        scheduled_time: sideEffectData.time + ':00',
+        status: 'taken',
+        side_effects: sideEffectData.symptoms,
+        severity_level: sideEffectData.severity,
+        notes: sideEffectData.notes,
+        actual_time: new Date().toISOString(),
+        created_at: sideEffectData.timestamp,
+        updated_at: sideEffectData.timestamp
+      }
+      medicationLogs.value.push(logData)
+    }
+    
+    showForm.value = false
+  } catch (error) {
+    console.error('Error saving side effect:', error)
   }
 }
+
+const deleteSideEffect = async (effectId) => {
+  try {
+    // APIから対応するログを削除
+    const response = await apiService.logs.delete(effectId)
+    
+    if (response.success) {
+      // ローカルデータから即座に削除（API再取得を避ける）
+      const sideEffectIndex = sideEffects.value.findIndex(effect => effect.id === effectId)
+      if (sideEffectIndex !== -1) {
+        sideEffects.value.splice(sideEffectIndex, 1)
+      }
+      
+      // medicationLogsからも削除
+      const logIndex = medicationLogs.value.findIndex(log => log.id === effectId)
+      if (logIndex !== -1) {
+        medicationLogs.value.splice(logIndex, 1)
+      }
+    }
+  } catch (error) {
+    console.error('Error deleting side effect:', error)
+  }
+}
+
+const updateSideEffectsFromLogs = () => {
+  sideEffects.value = medicationLogs.value
+    .filter(log => log.side_effects && log.side_effects.length > 0)
+    .map(log => ({
+      id: log.id,
+      medicationId: log.medication_id,
+      symptoms: log.side_effects,
+      severity: log.severity_level,
+      date: log.scheduled_date,
+      time: log.scheduled_time ? (typeof log.scheduled_time === 'string' ? log.scheduled_time.substring(0, 5) : log.scheduled_time) : '--:--', // HH:MM形式
+      notes: log.notes,
+      timestamp: log.actual_time || log.created_at
+    }))
+}
+
+const fetchData = async () => {
+  try {
+    loading.value = true
+    
+    // APIから処方薬データを取得
+    const medicationsResponse = await apiService.medications.getAll()
+    if (medicationsResponse.success && medicationsResponse.data) {
+      medications.value = medicationsResponse.data
+    }
+    
+    // APIから服薬ログデータを取得
+    const logsResponse = await apiService.logs.getAll()
+    if (logsResponse.success && logsResponse.data) {
+      medicationLogs.value = logsResponse.data
+      updateSideEffectsFromLogs()
+    }
+    
+  } catch (error) {
+    console.error('Error fetching side effects data:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchData()
+})
 </script>
