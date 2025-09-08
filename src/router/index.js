@@ -61,42 +61,42 @@ const router = createRouter({
   routes
 })
 
-// Navigation guards - temporarily disabled to prevent infinite loops
-// router.beforeEach(async (to, from, next) => {
-//   const authStore = useAuthStore()
-//   
-//   // Wait for auth initialization if still loading
-//   if (authStore.loading) {
-//     // Create a promise that resolves when auth is no longer loading
-//     await new Promise((resolve) => {
-//       const unwatch = authStore.$subscribe(() => {
-//         if (!authStore.loading) {
-//           unwatch()
-//           resolve()
-//         }
-//       })
-//     })
-//   }
-//   
-//   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
-//   const requiresGuest = to.matched.some(record => record.meta.requiresGuest)
-//   
-//   // Prevent infinite redirects - check if we're already on the target route
-//   if (to.name === from.name || to.path === from.path) {
-//     next()
-//     return
-//   }
-//   
-//   // Prevent redirect loops between login and dashboard
-//   if (requiresAuth && !authStore.isAuthenticated && to.name !== 'Login') {
-//     // Redirect to login if not authenticated
-//     next({ name: 'Login' })
-//   } else if (requiresGuest && authStore.isAuthenticated && to.name !== 'Dashboard') {
-//     // Redirect to dashboard if already authenticated
-//     next({ name: 'Dashboard' })
-//   } else {
-//     next()
-//   }
-// })
+// Navigation guards
+router.beforeEach(async (to, from, next) => {
+  const authStore = useAuthStore()
+  
+  // Wait for auth initialization if still loading
+  if (authStore.loading) {
+    // Create a promise that resolves when auth is no longer loading
+    await new Promise((resolve) => {
+      const unwatch = authStore.$subscribe(() => {
+        if (!authStore.loading) {
+          unwatch()
+          resolve()
+        }
+      })
+    })
+  }
+  
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+  const requiresGuest = to.matched.some(record => record.meta.requiresGuest)
+  
+  // Prevent infinite redirects - check if we're already on the target route
+  if (to.name === from.name || to.path === from.path) {
+    next()
+    return
+  }
+  
+  // Prevent redirect loops between login and dashboard
+  if (requiresAuth && !authStore.isAuthenticated && to.name !== 'Login') {
+    // Redirect to login if not authenticated
+    next({ name: 'Login' })
+  } else if (requiresGuest && authStore.isAuthenticated && to.name !== 'Dashboard') {
+    // Redirect to dashboard if already authenticated
+    next({ name: 'Dashboard' })
+  } else {
+    next()
+  }
+})
 
 export default router
