@@ -126,17 +126,28 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import StatCard from '../components/StatCard.vue'
 import DailySchedule from '../components/DailySchedule.vue'
-import { medications, medicationLogs, sideEffects, severityOptions } from '../data/mockData.js'
+import { apiService } from '../services/api.js'
+
+const medications = ref([])
+const medicationLogs = ref([])
+const sideEffects = ref([])
+const loading = ref(false)
+
+const severityOptions = [
+  { value: 'mild', label: '軽度' },
+  { value: 'moderate', label: '中等度' },
+  { value: 'severe', label: '重度' }
+]
 
 const today = new Date().toISOString().split('T')[0]
 
 const todayAdherence = computed(() => {
-  const todayLogs = medicationLogs.filter(log => log.date === today)
+  const todayLogs = medicationLogs.value.filter(log => log.scheduled_date === today)
   if (todayLogs.length === 0) return 0
-  const takenCount = todayLogs.filter(log => log.taken).length
+  const takenCount = todayLogs.filter(log => log.status === 'taken').length
   return Math.round((takenCount / todayLogs.length) * 100)
 })
 
@@ -145,9 +156,9 @@ const weeklyAdherence = computed(() => {
   weekAgo.setDate(weekAgo.getDate() - 7)
   const weekAgoString = weekAgo.toISOString().split('T')[0]
   
-  const weekLogs = medicationLogs.filter(log => log.date >= weekAgoString && log.date <= today)
+  const weekLogs = medicationLogs.value.filter(log => log.scheduled_date >= weekAgoString && log.scheduled_date <= today)
   if (weekLogs.length === 0) return 0
-  const takenCount = weekLogs.filter(log => log.taken).length
+  const takenCount = weekLogs.filter(log => log.status === 'taken').length
   return Math.round((takenCount / weekLogs.length) * 100)
 })
 
@@ -156,11 +167,11 @@ const recentSideEffects = computed(() => {
   monthAgo.setMonth(monthAgo.getMonth() - 1)
   const monthAgoString = monthAgo.toISOString().split('T')[0]
   
-  return sideEffects.filter(effect => effect.date >= monthAgoString).length
+  return sideEffects.value.filter(effect => effect.date >= monthAgoString).length
 })
 
 const recentSideEffectsList = computed(() => {
-  return [...sideEffects]
+  return [...sideEffects.value]
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
     .slice(0, 5)
 })
@@ -178,11 +189,11 @@ const miniCalendar = computed(() => {
     date.setDate(startOfWeek.getDate() + i)
     const dateString = date.toISOString().split('T')[0]
     
-    const dayLogs = medicationLogs.filter(log => log.date === dateString)
+    const dayLogs = medicationLogs.value.filter(log => log.scheduled_date === dateString)
     let className = 'bg-gray-100 text-gray-400'
     
     if (dayLogs.length > 0) {
-      const takenCount = dayLogs.filter(log => log.taken).length
+      const takenCount = dayLogs.filter(log => log.status === 'taken').length
       const adherenceRate = (takenCount / dayLogs.length) * 100
       
       if (adherenceRate === 100) {
@@ -224,7 +235,7 @@ const formatDateTime = (date, time) => {
 }
 
 const getMedicationName = (medicationId) => {
-  const medication = medications.find(med => med.id === medicationId)
+  const medication = medications.value.find(med => med.id === medicationId)
   return medication ? medication.name : '不明な処方薬'
 }
 
@@ -245,4 +256,44 @@ const getSeverityClass = (severity) => {
       return 'bg-gray-100 text-gray-700'
   }
 }
+
+const fetchData = async () => {
+  try {
+    loading.value = true
+    
+    // APIから処方薬データを取得
+    const medicationsResponse = await apiService.medications.getAll()
+    if (medicationsResponse.success && medicationsResponse.data) {
+      medications.value = medicationsResponse.data
+    }
+    
+    // APIから服薬ログデータを取得
+    const logsResponse = await apiService.logs.getAll()
+    if (logsResponse.success && logsResponse.data) {
+      medicationLogs.value = logsResponse.data
+    }
+    
+    // 副作用データはlogsの中から抽出
+    sideEffects.value = medicationLogs.value
+      .filter(log => log.side_effects && log.side_effects.length > 0)
+      .map(log => ({
+        id: log.id,
+        medicationId: log.medication_pattern_id,
+        symptoms: log.side_effects,
+        severity: log.severity_level,
+        date: log.scheduled_date,
+        time: log.scheduled_time,
+        timestamp: log.actual_time || log.created_at
+      }))
+    
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchData()
+})
 </script>

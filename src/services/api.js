@@ -36,7 +36,10 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       // Token expired or invalid
       localStorage.removeItem('laravel_token')
-      // Redirect to login or refresh token
+      // Redirect to login page
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   }
@@ -50,9 +53,7 @@ export const apiService = {
     getToken: async (supabaseUser) => {
       try {
         const response = await apiClient.post('/auth/token', {
-          supabase_user_id: supabaseUser.id,
-          email: supabaseUser.email,
-          name: supabaseUser.user_metadata?.name || supabaseUser.email,
+          supabase_token: supabaseUser.access_token || supabaseUser.id, // Supabase JWT token
         })
         return response.data
       } catch (error) {
@@ -120,9 +121,13 @@ export const apiService = {
     update: async (id, medicationData) => {
       try {
         const response = await apiClient.put(`/medications/${id}`, medicationData)
+        console.log('Update response:', response.data)
         return response.data
       } catch (error) {
         console.error('Error updating medication:', error)
+        if (error.response && error.response.data) {
+          console.error('Validation errors:', error.response.data)
+        }
         throw error
       }
     },
@@ -138,28 +143,7 @@ export const apiService = {
     }
   },
 
-  // Medication Patterns endpoints
-  patterns: {
-    getByMedication: async (medicationId) => {
-      try {
-        const response = await apiClient.get(`/medications/${medicationId}/patterns`)
-        return response.data
-      } catch (error) {
-        console.error('Error getting patterns:', error)
-        throw error
-      }
-    },
-
-    create: async (medicationId, patternData) => {
-      try {
-        const response = await apiClient.post(`/medications/${medicationId}/patterns`, patternData)
-        return response.data
-      } catch (error) {
-        console.error('Error creating pattern:', error)
-        throw error
-      }
-    }
-  },
+  // Medication Patterns endpoints (removed - using medication schedule directly)
 
   // Medication Logs endpoints
   logs: {
@@ -189,6 +173,16 @@ export const apiService = {
         return response.data
       } catch (error) {
         console.error('Error updating medication log:', error)
+        throw error
+      }
+    },
+
+    delete: async (id) => {
+      try {
+        const response = await apiClient.delete(`/medication-logs/${id}`)
+        return response.data
+      } catch (error) {
+        console.error('Error deleting medication log:', error)
         throw error
       }
     }

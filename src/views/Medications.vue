@@ -129,7 +129,9 @@ const editMedication = (medication) => {
 }
 
 const deleteMedication = (medicationId) => {
+  console.log('Deleting medication ID:', medicationId)
   deletingMedication.value = medications.value.find(med => med.id === medicationId)
+  console.log('Found medication to delete:', deletingMedication.value)
   showDeleteDialog.value = true
 }
 
@@ -142,6 +144,8 @@ const saveMedication = async (medicationData) => {
   try {
     if (editingMedication.value) {
       // 編集
+      console.log('Editing medication:', editingMedication.value)
+      console.log('Medication ID:', editingMedication.value.id)
       await apiService.medications.update(editingMedication.value.id, medicationData)
     } else {
       // 新規追加
@@ -152,7 +156,20 @@ const saveMedication = async (medicationData) => {
     await fetchMedications()
     closeForm()
   } catch (err) {
-    error.value = '処方薬の保存に失敗しました'
+    // バックエンドからのエラーメッセージを優先的に表示
+    if (err.response && err.response.data) {
+      if (err.response.data.message) {
+        error.value = err.response.data.message
+      } else if (err.response.data.errors) {
+        // バリデーションエラーの場合
+        const errorMessages = Object.values(err.response.data.errors).flat()
+        error.value = 'バリデーションエラー: ' + errorMessages.join(', ')
+      } else {
+        error.value = '処方薬の保存に失敗しました'
+      }
+    } else {
+      error.value = '処方薬の保存に失敗しました'
+    }
     console.error('Error saving medication:', err)
   }
 }
@@ -163,7 +180,12 @@ const confirmDelete = async () => {
       await apiService.medications.delete(deletingMedication.value.id)
       await fetchMedications() // リスト再取得
     } catch (err) {
-      error.value = '処方薬の削除に失敗しました'
+      // バックエンドからのエラーメッセージを優先的に表示
+      if (err.response && err.response.data && err.response.data.message) {
+        error.value = err.response.data.message
+      } else {
+        error.value = '処方薬の削除に失敗しました'
+      }
       console.error('Error deleting medication:', err)
     }
   }

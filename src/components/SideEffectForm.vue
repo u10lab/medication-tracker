@@ -39,6 +39,7 @@
             </div>
           </div>
 
+
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">時間</label>
             <input
@@ -121,10 +122,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { medications, commonSymptoms, severityOptions } from '../data/mockData.js'
+import { ref, onMounted } from 'vue'
+import { apiService } from '../services/api.js'
 
-defineEmits(['close', 'save'])
+const emit = defineEmits(['close', 'save'])
+
+const medications = ref([])
+const commonSymptoms = ref([])
+const severityOptions = [
+  { value: 'mild', label: '軽度', color: 'text-green-600' },
+  { value: 'moderate', label: '中等度', color: 'text-yellow-600' },
+  { value: 'severe', label: '重度', color: 'text-red-600' }
+]
 
 const form = ref({
   medicationId: '',
@@ -135,18 +144,78 @@ const form = ref({
   notes: ''
 })
 
-const handleSubmit = () => {
-  const sideEffect = {
-    id: Date.now(),
-    medicationId: parseInt(form.value.medicationId),
-    date: form.value.date,
-    time: form.value.time,
-    symptoms: [...form.value.symptoms],
-    severity: form.value.severity,
-    notes: form.value.notes,
-    timestamp: new Date().toISOString()
+const handleSubmit = async () => {
+  try {
+    const logData = {
+      medication_id: parseInt(form.value.medicationId),
+      scheduled_date: form.value.date,
+      scheduled_time: form.value.time + ':00',
+      status: 'taken',
+      side_effects: [...form.value.symptoms],
+      severity_level: form.value.severity,
+      notes: form.value.notes
+    }
+    
+    const response = await apiService.logs.create(logData)
+    if (response.success) {
+      console.log('副作用を記録しました')
+      // フォームをリセット
+      form.value = {
+        medicationId: '',
+        date: new Date().toISOString().split('T')[0],
+        time: new Date().toTimeString().slice(0, 5),
+        symptoms: [],
+        severity: 'mild',
+        notes: ''
+      }
+      // 処方薬名を取得
+      const selectedMedication = medications.value.find(med => med.id === parseInt(logData.medication_id))
+      const medicationName = selectedMedication ? selectedMedication.name : '不明な処方薬'
+      
+      // 作成されたデータを親コンポーネントに渡す
+      emit('save', {
+        id: response.data.id,
+        medicationId: parseInt(logData.medication_id),
+        medicationName: medicationName,
+        date: logData.scheduled_date,
+        time: logData.scheduled_time.substring(0, 5),
+        symptoms: logData.side_effects,
+        severity: logData.severity_level,
+        notes: logData.notes,
+        timestamp: new Date().toISOString()
+      })
+      emit('close')
+    } else {
+      alert('副作用記録の保存に失敗しました')
+    }
+  } catch (error) {
+    console.error('Error saving side effect:', error)
+    alert('副作用記録の保存に失敗しました')
   }
-  
-  emit('save', sideEffect)
 }
+
+
+const fetchData = async () => {
+  try {
+    // 処方薬データを取得
+    const medicationsResponse = await apiService.medications.getAll()
+    if (medicationsResponse.success && medicationsResponse.data) {
+      medications.value = medicationsResponse.data
+      
+      // 服薬パターンは削除されたため、処方薬のスケジュール情報を直接使用
+    }
+    
+    // 副作用タイプを取得
+    const sideEffectsResponse = await apiService.sideEffects.getTypes()
+    if (sideEffectsResponse.success && sideEffectsResponse.data) {
+      commonSymptoms.value = sideEffectsResponse.data.map(effect => effect.name)
+    }
+  } catch (error) {
+    console.error('Error fetching form data:', error)
+  }
+}
+
+onMounted(() => {
+  fetchData()
+})
 </script>

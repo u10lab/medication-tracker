@@ -38,12 +38,17 @@ export const useAuthStore = defineStore('auth', () => {
           // ログアウト時にAPIトークンをクリア
           await clearApiAccess()
         }
-        
-        loading.value = false
       })
+      
+      // If user is already authenticated, setup API access
+      if (initialSession?.user) {
+        await setupApiAccess(initialSession.user)
+      }
+      
+      // Set loading to false after initial setup
+      loading.value = false
     } catch (error) {
       console.error('Error initializing auth:', error)
-    } finally {
       loading.value = false
     }
   }
@@ -51,13 +56,34 @@ export const useAuthStore = defineStore('auth', () => {
   // Setup API access with Laravel token
   const setupApiAccess = async (supabaseUser) => {
     try {
-      const { user: laravelUserData, token } = await apiService.auth.getToken(supabaseUser)
+      // Supabase セッションからアクセストークンを取得
+      const { data: { session } } = await supabase.auth.getSession()
+      console.log('Supabase session:', session)
+      
+      if (!session?.access_token) {
+        console.error('No Supabase access token available')
+        throw new Error('No Supabase access token available')
+      }
+      
+      console.log('Sending to Laravel API:', {
+        access_token: session.access_token.substring(0, 20) + '...',
+        id: supabaseUser.id,
+        email: supabaseUser.email
+      })
+      
+      const { user: laravelUserData, token } = await apiService.auth.getToken({
+        access_token: session.access_token,
+        id: supabaseUser.id,
+        email: supabaseUser.email
+      })
+      
       apiToken.value = token
       laravelUser.value = laravelUserData
       setApiToken(token)
       console.log('Laravel API access established')
     } catch (error) {
       console.error('Failed to setup API access:', error)
+      // エラーが発生しても認証状態は維持する
     }
   }
 

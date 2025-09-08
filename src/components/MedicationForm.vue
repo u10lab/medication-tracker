@@ -251,13 +251,20 @@ const form = ref({
 
 // 編集モードの場合、既存データを設定
 if (props.medication) {
-  form.value = { ...props.medication }
-  // cyclePatternが存在しない場合はデフォルト値で初期化
-  if (!form.value.schedule.cyclePattern) {
-    form.value.schedule.cyclePattern = {
-      activeDays: 14,
-      breakDays: 7,
-      totalCycles: 1
+  form.value = { 
+    ...props.medication,
+    // DBから取得したデータにはscheduleが含まれていないため、デフォルト値を設定
+    schedule: props.medication.schedule || {
+      type: 'daily',
+      dosesPerDay: 1,
+      times: ['08:00'],
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      cyclePattern: {
+        activeDays: 14,
+        breakDays: 7,
+        totalCycles: 1
+      }
     }
   }
 }
@@ -296,6 +303,7 @@ const removeTime = (index) => {
 }
 
 const handleSubmit = () => {
+  console.log('Sending medication data:', { ...form.value })
   emit('save', { ...form.value })
 }
 </script>
