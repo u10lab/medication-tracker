@@ -19,17 +19,22 @@ import Navigation from './components/Navigation.vue'
 import { useAuthStore } from './stores/auth'
 
 const authStore = useAuthStore()
+// Piniaで定義された認証ストア（authStore）を使えるように
 const router = useRouter()
+// Vue Routerの機能（例: router.push('/login') のようなページ遷移）をプログラムで実行
 const route = useRoute()
+// 現在表示しているページのルート情報（URL、ルート名、metaデータなど）を取得
 
 onMounted(async () => {
   // Initialize auth state
   await authStore.initialize()
 })
+// まず authStore の initialize アクションを実行。
+// このアクションは、Supabaseなどに問い合わせて、有効なセッション情報が残っているかを確認し、ユーザーのログイン状態を確定させる役割
 
-// Watch for auth state changes and handle routing
 watch(
   () => authStore.isAuthenticated,
+  // 「ルートガード」と呼ばれるVue Routerの機能
   (isAuthenticated) => {
     if (!authStore.loading) {
       const requiresAuth = route.meta.requiresAuth
