@@ -75,7 +75,7 @@ export const apiService = {
         })
         
         const response = await apiClient.post('/auth/token', {
-          supabase_token: supabaseUser.supabase_token || supabaseUser.access_token || supabaseUser.id
+          supabase_token: supabaseUser.access_token || supabaseUser.id, // Supabase JWT token
         })
         return response.data
       } catch (error) {
