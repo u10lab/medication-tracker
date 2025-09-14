@@ -1,19 +1,32 @@
 import axios from 'axios'
 
-// API base configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 
-// Create axios instance
+// axios.createは、axiosのインスタンスを作成するための関数
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  withCredentials: true, // Important for Sanctum CSRF protection
+  withCredentials: true, 
+  // Laravel SanctumのようなCookieベースのCSRF（クロスサイトリクエストフォージェリ）保護を使用する場合に重要な設定
 })
 
-// Request interceptor to add auth token
+// デバッグ用: API設定をコンソールに出力
+console.log('🔧 API Configuration:', {
+  baseURL: API_BASE_URL,
+  environment: import.meta.env.MODE
+})
+
+
+// 役割: APIにリクエストを送る直前に、自動で認証トークンをヘッダーに付与。
+// 仕組み:
+// 1.apiClientでリクエストが発生するたびに、この関数が実行。
+// localStorageから 'laravel_token' を探し出す。
+// もしトークンが存在すれば、リクエストの設定オブジェクト (config) のヘッダーに Authorization: 'Bearer [トークンの値]' という形式で追加。
+// 最後に、変更が加えられたconfigを返して、リクエストの送信を続行させる。
+// 利点: これにより、APIを呼び出す全ての関数で認証ヘッダーを付与するコードを書く必要がなくなり、非常にクリーンに。
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('laravel_token')
@@ -27,7 +40,11 @@ apiClient.interceptors.request.use(
   }
 )
 
-// Response interceptor to handle errors
+// 1. APIからエラー応答が返ってくると、この関数の第2引数が実行。
+// 2. error.response?.status === 401: エラーのステータスコードが401 Unauthorized（認証失敗・トークン切れ）かどうかをチェック。
+// 3. もし401エラーなら、以下の処理を実行。
+// 4. localStorage.removeItem('laravel_token'): 無効になったトークンを削除。
+// 5. window.location.href = '/login': ユーザーを強制的にログインページにリダイレクトさせる。
 apiClient.interceptors.response.use(
   (response) => {
     return response
@@ -52,12 +69,21 @@ export const apiService = {
     // Get Laravel API token using Supabase user info
     getToken: async (supabaseUser) => {
       try {
+        console.log('🔧 API getToken request:', {
+          supabaseUser: supabaseUser,
+          token: supabaseUser.supabase_token || supabaseUser.access_token || supabaseUser.id
+        })
+        
         const response = await apiClient.post('/auth/token', {
           supabase_token: supabaseUser.access_token || supabaseUser.id, // Supabase JWT token
         })
         return response.data
       } catch (error) {
         console.error('Error getting API token:', error)
+        if (error.response) {
+          console.error('Response data:', error.response.data)
+          console.error('Response status:', error.response.status)
+        }
         throw error
       }
     },

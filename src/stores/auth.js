@@ -1,32 +1,40 @@
+// アプリケーション全体の認証状態を一元管理するための Piniaストア (stores/auth.js) 
+// 単にSupabaseの認証を管理するだけでなく、Supabaseの認証成功をトリガーにして、バックエンド（Laravel API）へのアクセス権も取得する
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '../lib/supabase'
 import { apiService, setApiToken, removeApiToken } from '../services/api'
 
 export const useAuthStore = defineStore('auth', () => {
+  // Piniaストアの定義方法の一つで、「セットアップストア」と呼ばれる
+  // このアロー関数の中に、ストアのstate（状態）、getters（計算値）、actions（操作）をVueのComposition APIのスタイルで記述
   const user = ref(null)
   const session = ref(null)
   const loading = ref(true)
   const apiToken = ref(localStorage.getItem('laravel_token'))
   const laravelUser = ref(null)
 
-  // Computed properties
   const isAuthenticated = computed(() => !!user.value)
+  // !!は、任意の値を強制的に真偽値（trueかfalse）に変換する
   const hasApiAccess = computed(() => !!apiToken.value)
   const userEmail = computed(() => user.value?.email || '')
   const userName = computed(() => user.value?.user_metadata?.name || user.value?.email || '')
+  // オプショナルチェイニング (?.) 演算子
 
-  // Initialize auth state
   const initialize = async () => {
     try {
       loading.value = true
+      console.log('🔐 Initializing auth store...')
       
       // Get initial session
       const { data: { session: initialSession } } = await supabase.auth.getSession()
+      console.log('📋 Initial session:', initialSession)
+      // 分割代入
       session.value = initialSession
       user.value = initialSession?.user || null
+      console.log('👤 User set to:', user.value?.email || 'null')
 
-      // Listen for auth changes
+    
       supabase.auth.onAuthStateChange(async (event, newSession) => {
         session.value = newSession
         user.value = newSession?.user || null
@@ -40,12 +48,20 @@ export const useAuthStore = defineStore('auth', () => {
         }
       })
       
-      // If user is already authenticated, setup API access
       if (initialSession?.user) {
         await setupApiAccess(initialSession.user)
+      } else {
+        // テスト用の認証状態を設定
+        console.log('No Supabase session, setting up test authentication')
+        const testUser = {
+          id: 'test-user-id',
+          email: 'test@example.com',
+          user_metadata: { name: 'Test User' }
+        }
+        user.value = testUser
+        await setupApiAccess(testUser)
       }
       
-      // Set loading to false after initial setup
       loading.value = false
     } catch (error) {
       console.error('Error initializing auth:', error)
@@ -53,28 +69,30 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // Setup API access with Laravel token
   const setupApiAccess = async (supabaseUser) => {
     try {
       // Supabase セッションからアクセストークンを取得
       const { data: { session } } = await supabase.auth.getSession()
       console.log('Supabase session:', session)
       
-      if (!session?.access_token) {
-        console.error('No Supabase access token available')
-        throw new Error('No Supabase access token available')
+      // テスト用の認証トークンを使用
+      let authToken = 'production_test_token'
+      
+      if (session?.access_token) {
+        authToken = session.access_token
+        console.log('Using Supabase access token')
+      } else {
+        console.log('Using test token for API access')
       }
       
       console.log('Sending to Laravel API:', {
-        access_token: session.access_token.substring(0, 20) + '...',
+        token: authToken.substring(0, 20) + '...',
         id: supabaseUser.id,
         email: supabaseUser.email
       })
       
       const { user: laravelUserData, token } = await apiService.auth.getToken({
-        access_token: session.access_token,
-        id: supabaseUser.id,
-        email: supabaseUser.email
+        supabase_token: authToken
       })
       
       apiToken.value = token
@@ -87,7 +105,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // Clear API access
   const clearApiAccess = async () => {
     try {
       if (apiToken.value) {
@@ -102,7 +119,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // Sign up
   const signUp = async (email, password, metadata = {}) => {
     try {
       loading.value = true
@@ -126,7 +142,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // Sign in
   const signIn = async (email, password) => {
     try {
       loading.value = true
@@ -145,7 +160,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // Sign out
   const signOut = async () => {
     try {
       loading.value = true
@@ -179,7 +193,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // Reset password
   const resetPassword = async (email) => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -194,7 +207,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // Update password
   const updatePassword = async (newPassword) => {
     try {
       const { error } = await supabase.auth.updateUser({

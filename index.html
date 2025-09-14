@@ -2,12 +2,17 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
+    <!-- 日本語などの多言語が文字化けせずに正しく表示 -->
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- ページの幅を、表示しているデバイス（スマートフォン、PCなど）の画面幅に合わせる -->
+    <!-- ページの初期ズーム倍率を1.0（等倍）に設定・これにより、スマートフォンで表示した際にPC用サイトが小さく表示されるのを防ぐ -->
     <title>処方薬管理システム</title>
   </head>
   <body>
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
+    <!-- これにより、import や export といった構文が使えるように -->
+    <!-- /src/main.js ファイルを読み込んで実行するようブラウザに指示 -->
   </body>
 </html>
