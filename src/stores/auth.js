@@ -92,7 +92,9 @@ export const useAuthStore = defineStore('auth', () => {
       })
       
       const { user: laravelUserData, token } = await apiService.auth.getToken({
-        supabase_token: authToken
+        supabase_token: authToken,
+        id: supabaseUser.id,
+        email: supabaseUser.email
       })
       
       apiToken.value = token

@@ -69,12 +69,21 @@ export const apiService = {
     // Get Laravel API token using Supabase user info
     getToken: async (supabaseUser) => {
       try {
+        console.log('🔧 API getToken request:', {
+          supabaseUser: supabaseUser,
+          token: supabaseUser.supabase_token || supabaseUser.access_token || supabaseUser.id
+        })
+        
         const response = await apiClient.post('/auth/token', {
-          supabase_token: supabaseUser.access_token || supabaseUser.id, // Supabase JWT token
+          supabase_token: supabaseUser.supabase_token || supabaseUser.access_token || supabaseUser.id
         })
         return response.data
       } catch (error) {
         console.error('Error getting API token:', error)
+        if (error.response) {
+          console.error('Response data:', error.response.data)
+          console.error('Response status:', error.response.status)
+        }
         throw error
       }
     },
