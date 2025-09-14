@@ -24,12 +24,15 @@ export const useAuthStore = defineStore('auth', () => {
   const initialize = async () => {
     try {
       loading.value = true
+      console.log('🔐 Initializing auth store...')
       
       // Get initial session
       const { data: { session: initialSession } } = await supabase.auth.getSession()
+      console.log('📋 Initial session:', initialSession)
       // 分割代入
       session.value = initialSession
       user.value = initialSession?.user || null
+      console.log('👤 User set to:', user.value?.email || 'null')
 
     
       supabase.auth.onAuthStateChange(async (event, newSession) => {
