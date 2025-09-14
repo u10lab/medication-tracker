@@ -13,6 +13,12 @@ const apiClient = axios.create({
   // Laravel SanctumのようなCookieベースのCSRF（クロスサイトリクエストフォージェリ）保護を使用する場合に重要な設定
 })
 
+// デバッグ用: API設定をコンソールに出力
+console.log('🔧 API Configuration:', {
+  baseURL: API_BASE_URL,
+  environment: import.meta.env.MODE
+})
+
 
 // 役割: APIにリクエストを送る直前に、自動で認証トークンをヘッダーに付与。
 // 仕組み:
